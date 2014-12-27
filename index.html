@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html ng-app="AngMemApp">
+<head lang="de">
+  <meta charset="UTF-8">
+  <title>AngMem</title>
+  <link rel="stylesheet" href="angMem.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/2.4.1/lodash.js"></script>
+  <script src="angMem.js"></script>
+</head>
+<body ng-controller="AngMemController">
+
+<div ng-repeat="card in cards"
+     id="{{$index}}"
+     class = "card"
+     ng-class="{card_paired: card.paired, card_flipped: card.covered, card_hidden: !card.covered}"
+     class="card"
+     ng-click="cardClicked($event)">{{card.value}}</div>
+
+<div ng-if="done">
+  Congratulations. You have done it in {{numberOfSteps}} steps.
+</div>
+
+</body>
+</html>
