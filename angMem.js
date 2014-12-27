@@ -16,31 +16,32 @@
     return cards[index].paired;
   }
 
-  function coverCards(cards, indexOfFirstCard, indexOfSecondCard) {
-    cards[indexOfFirstCard].covered = false;
-    cards[indexOfSecondCard].covered = false;
+  function coverCards(cards, uncoveredCards) {
+    var keys = _.keys(uncoveredCards);
+    cards[keys[0]].covered = false;
+    cards[keys[1]].covered = false;
   }
 
   function flipCard(cards, indexOfCard) {
     return cards[indexOfCard].covered = !cards[indexOfCard].covered;
   }
 
-  function pairUncoveredCards(cards, indexOfFirstCard, indexOfSecondCard) {
-    cards[indexOfFirstCard].paired = true;
-    cards[indexOfSecondCard].paired = true;
+  function pairUncoveredCards(cards, uncoveredCards) {
+    var keys = _.keys(uncoveredCards);
+    cards[keys[0]].paired = true;
+    cards[keys[1]].paired = true;
   }
 
-  function uncoveredCardsIdentical(cards, indexOfFirstCard, indexOfSecondCard) {
-    return cards[indexOfFirstCard].value === cards[indexOfSecondCard].value;
+  function uncoveredCardsIdentical(cards, uncoveredCards) {
+    var keys = _.keys(uncoveredCards);
+    return cards[keys[0]].value === cards[keys[1]].value;
   }
 
   angular.module('AngMemApp', [])
     .controller('AngMemController', ['$scope', function($scope) {
 
       var numberOfPairs = 0;
-      var numberOfUncoveredCards = 0;
-      var firstUncoveredCardIndex;
-      var secondUncoveredCardIndex;
+      var uncoveredCards = {};
 
       $scope.done = false;
       $scope.numberOfSteps = 0;
@@ -58,35 +59,24 @@
           return;
         }
 
-        if(numberOfUncoveredCards === 2) {
-          coverCards($scope.cards, firstUncoveredCardIndex, secondUncoveredCardIndex);
-          numberOfUncoveredCards = 0;
-          firstUncoveredCardIndex = undefined;
-          secondUncoveredCardIndex = undefined;
+        if(_.size(uncoveredCards) === 2) {
+          coverCards($scope.cards, uncoveredCards);
+          uncoveredCards = {};
         }
 
-        if (numberOfUncoveredCards < 2) {
+        if (_.size(uncoveredCards) < 2) {
           var cardUncovered = flipCard($scope.cards, indexOfCard);
           if (cardUncovered === true) {
-            secondUncoveredCardIndex = (firstUncoveredCardIndex !== undefined) ? indexOfCard : undefined;
-            firstUncoveredCardIndex = (firstUncoveredCardIndex === undefined) ?  indexOfCard : firstUncoveredCardIndex;
-            numberOfUncoveredCards++;
+            uncoveredCards[indexOfCard] = true;
           } else {
-            if(firstUncoveredCardIndex === indexOfCard) {
-              firstUncoveredCardIndex = undefined;
-            } else {
-              secondUncoveredCardIndex = undefined;
-            }
-            numberOfUncoveredCards--;
+            delete uncoveredCards[indexOfCard];
           }
         }
 
-        if (numberOfUncoveredCards === 2 && uncoveredCardsIdentical($scope.cards, firstUncoveredCardIndex, secondUncoveredCardIndex)) {
-          pairUncoveredCards($scope.cards, firstUncoveredCardIndex, secondUncoveredCardIndex);
+        if (_.size(uncoveredCards) === 2 && uncoveredCardsIdentical($scope.cards, uncoveredCards)) {
+          pairUncoveredCards($scope.cards, uncoveredCards);
           numberOfPairs++;
-          numberOfUncoveredCards = 0;
-          firstUncoveredCardIndex = undefined;
-          secondUncoveredCardIndex = undefined;
+          uncoveredCards = {};
           if (numberOfPairs === NUMBER_OF_CARD_PAIRS) {
             $scope.done = true;
           }
