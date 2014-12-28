@@ -1,102 +1,88 @@
 
 (function(angular, _){
 
-  function MemoryGame(numberOfPairs) {
-    this.numberOfPairs = numberOfPairs;
-  }
-
-  MemoryGame.prototype.initialize = function() {
-    this.actualNumberOfPairs = 0;
-    this.uncoveredCards = {};
-    this.done = false;
-    this.numberOfSteps = 0;
-
-    this.cards = [];
-    for(var i = 0; i < this.numberOfPairs; i++) {
-      this.cards.push({ covered: false, paired: false, value: i });
-      this.cards.push({ covered: false, paired: false, value: i });
-    }
-    this.cards = _.shuffle(this.cards);
-  }
-
-  MemoryGame.prototype.cardAlreadyPaired = function(index) {
-    return this.cards[index].paired;
-  }
-
-  MemoryGame.prototype.coverCards = function() {
-    var keys = _.keys(this.uncoveredCards);
-    this.cards[keys[0]].covered = false;
-    this.cards[keys[1]].covered = false;
-  }
-
-  MemoryGame.prototype.flipCard = function(indexOfCard) {
-    return this.cards[indexOfCard].covered = !this.cards[indexOfCard].covered;
-  }
-
-  MemoryGame.prototype.pairUncoveredCards = function() {
-    var keys = _.keys(this.uncoveredCards);
-    this.cards[keys[0]].paired = true;
-    this.cards[keys[1]].paired = true;
-  }
-
-  MemoryGame.prototype.uncoveredCardsIdentical = function() {
-    var keys = _.keys(this.uncoveredCards);
-    return this.cards[keys[0]].value === this.cards[keys[1]].value;
-  }
-
-  MemoryGame.prototype.handleCardSelection = function(indexOfCard) {
-    this.numberOfSteps++;
-
-    if (this.cardAlreadyPaired(indexOfCard)) {
-      return;
-    }
-
-    if(_.size(this.uncoveredCards) === 2) {
-      this.coverCards();
-      this.uncoveredCards = {};
-    }
-
-    if (_.size(this.uncoveredCards) < 2) {
-      var cardUncovered = this.flipCard(indexOfCard);
-      if (cardUncovered === true) {
-        this.uncoveredCards[indexOfCard] = true;
-      } else {
-        delete this.uncoveredCards[indexOfCard];
-      }
-    }
-
-    if (_.size(this.uncoveredCards) === 2 && this.uncoveredCardsIdentical()) {
-      this.pairUncoveredCards();
-      this.actualNumberOfPairs++;
-      this.uncoveredCards = {};
-      if (this.actualNumberOfPairs === this.numberOfPairs) {
-        this.done = true;
-      }
-    }
-  }
-
   var NUMBER_OF_CARD_PAIRS = 3;
+
+  function createCards(numberOfCardPairs) {
+    var cards = [];
+    for(var i = 0; i < numberOfCardPairs; i++) {
+      cards.push({ covered: false, paired: false, value: i });
+      cards.push({ covered: false, paired: false, value: i });
+    }
+    return cards;
+  }
+
+  function cardAlreadyPaired(cards, index) {
+    return cards[index].paired;
+  }
+
+  function coverCards(cards, uncoveredCards) {
+    var keys = _.keys(uncoveredCards);
+    cards[keys[0]].covered = false;
+    cards[keys[1]].covered = false;
+  }
+
+  function flipCard(cards, indexOfCard) {
+    return cards[indexOfCard].covered = !cards[indexOfCard].covered;
+  }
+
+  function pairUncoveredCards(cards, uncoveredCards) {
+    var keys = _.keys(uncoveredCards);
+    cards[keys[0]].paired = true;
+    cards[keys[1]].paired = true;
+  }
+
+  function uncoveredCardsIdentical(cards, uncoveredCards) {
+    var keys = _.keys(uncoveredCards);
+    return cards[keys[0]].value === cards[keys[1]].value;
+  }
 
   angular.module('AngMemApp', [])
     .controller('AngMemController', ['$scope', function($scope) {
 
-      function setScopeValues() {
-        $scope.done = game.done;
-        $scope.numberOfSteps = game.numberOfSteps;
-        $scope.cards = game.cards;
-      }
+      var numberOfPairs = 0;
+      var uncoveredCards = {};
 
-      var game = new MemoryGame(NUMBER_OF_CARD_PAIRS);
-      game.initialize();
-      setScopeValues();
+      $scope.done = false;
+      $scope.numberOfSteps = 0;
+      $scope.cards = _.shuffle(createCards(NUMBER_OF_CARD_PAIRS));
 
       $scope.cardClicked = function(event) {
         event.preventDefault();
         event.stopPropagation();
 
+        $scope.numberOfSteps++;
+
         var indexOfCard  = parseInt(event.target.id);
-        game.handleCardSelection(indexOfCard);
-        setScopeValues();
+
+        if (cardAlreadyPaired($scope.cards, indexOfCard)) {
+          return;
+        }
+
+        if(_.size(uncoveredCards) === 2) {
+          coverCards($scope.cards, uncoveredCards);
+          uncoveredCards = {};
+        }
+
+        if (_.size(uncoveredCards) < 2) {
+          var cardUncovered = flipCard($scope.cards, indexOfCard);
+          if (cardUncovered === true) {
+            uncoveredCards[indexOfCard] = true;
+            numberOfUncoveredCards++;
+          } else {
+            delete uncoveredCards[indexOfCard];
+          }
+        }
+
+        if (_.size(uncoveredCards) === 2 && uncoveredCardsIdentical($scope.cards, uncoveredCards)) {
+          pairUncoveredCards($scope.cards, uncoveredCards);
+          numberOfPairs++;
+          uncoveredCards = {};
+          if (numberOfPairs === NUMBER_OF_CARD_PAIRS) {
+            $scope.done = true;
+          }
+        }
+
       };
 
     }]);
